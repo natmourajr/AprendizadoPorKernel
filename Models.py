@@ -15,6 +15,10 @@ import joblib
 
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import roc_auc_score
+
+def auc_score(y_true,y_pred):
+    return roc_auc_score(y_true, y_pred)
 
 def sensitivity_score(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
@@ -34,7 +38,7 @@ def sp_index(y_true, y_pred):
 def acc_score(y_true, y_pred):
     return accuracy_score(y_true, y_pred)
 
-class MLPModel:
+class MLPClassificationModel:
     def __init__(self, n_hidden_neurons=2, verbose=2):
         self.n_hidden_neurons = n_hidden_neurons
         self.model = None
@@ -174,4 +178,51 @@ class MLPModel:
         buffer_model = self.model_with_no_output_layer()
         return buffer_model.predict(data)
 
+from sklearn.svm import SVC
+
+class SVMClassificationModel:
+    def __init__(self, kernel="linear", regularization=0.5, verbose=2):
+        self.model = None
+        self.trn_history = None
+        self.trained = False
+        self.verbose = verbose
+        self.kernel = kernel
+        self.regularization = regularization
+
+    def __str__(self):
+        m_str = 'Class SVMClassificationModel\n'
+        if self.trained:
+            m_str += 'Model is fitted, '
+        else:
+            m_str += 'Model is not fitted, '
+        return m_str
+    
+    def create_model(self, class_weight=None, random_state=0):
+        return SVC(C=self.regularization,
+                   kernel=self.kernel, 
+                   random_state=random_state,
+                   verbose=self.verbose)
+    
+    def fit(self, X, Y,
+            trn_id=None, 
+            val_id=None, 
+            random_state=0):
+        model = self.create_model(random_state=random_state)
+        if trn_id is None:
+            model.fit(X,Y)
+        else:
+            model.fit(X[trn_id], Y[trn_id])
+        self.model = model
+        self.trained = True
+        
+    def predict(self, data):
+        return self.model.predict(data)
+    
+    def save(self, file_path):
+        with open(file_path,'wb') as file_handler:
+            joblib.dump([self.regularization, self.kernel, self.model, self.trn_history, self.trained], file_handler)
+            
+    def load(self, file_path):
+        with open(file_path,'rb') as file_handler:
+            [self.regularization, self.kernel, self.model, self.trn_history, self.trained]= joblib.load(file_handler)
 
