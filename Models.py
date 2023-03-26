@@ -38,6 +38,11 @@ def sp_index(y_true, y_pred):
 def acc_score(y_true, y_pred):
     return accuracy_score(y_true, y_pred)
 
+def get_confusion_matrix(y_true, y_pred, class_labels=None):
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred, normalize='true').ravel() # only in binary case
+    return (tn, fp, fn, tp)
+
+
 class MLPClassificationModel:
     def __init__(self, n_hidden_neurons=2, verbose=2):
         self.n_hidden_neurons = n_hidden_neurons
@@ -192,9 +197,10 @@ class SVMClassificationModel:
     def __str__(self):
         m_str = 'Class SVMClassificationModel\n'
         if self.trained:
-            m_str += 'Model is fitted, '
+            m_str += 'Model is fitted, \n'
         else:
-            m_str += 'Model is not fitted, '
+            m_str += 'Model is not fitted, \n'
+        m_str += "Model created with %s of regularization and kernel %s"%(self.regularization, self.kernel)
         return m_str
     
     def create_model(self, class_weight=None, random_state=0):
@@ -221,7 +227,7 @@ class SVMClassificationModel:
     def save(self, file_path):
         with open(file_path,'wb') as file_handler:
             joblib.dump([self.regularization, self.kernel, self.model, self.trn_history, self.trained], file_handler)
-            
+
     def load(self, file_path):
         with open(file_path,'rb') as file_handler:
             [self.regularization, self.kernel, self.model, self.trn_history, self.trained]= joblib.load(file_handler)
